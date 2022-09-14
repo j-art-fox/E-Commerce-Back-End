@@ -1,6 +1,5 @@
 const router = require('express').Router();
 const { Product, Category, Tag, ProductTag } = require('../../models');
-const associations = {include: [{model: Category, model: Tag}]}
 
 // The `/api/products` endpoint
 
@@ -8,20 +7,30 @@ const associations = {include: [{model: Category, model: Tag}]}
 router.get('/', async (req, res) => {
   // 済　find all products
   // 済　be sure to include its associated Category and Tag data
-  try {
-    const productData = await Product.findAll(associations);
-    res.status(200).json(productData);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
+  try {   
+    const allProducts = await Product.findAll({
+      include: [{ model: Category }, { model: Tag }],
+    });
+   res.status(200).json(allProducts);
+   } catch (err) {
+   res.status(500).json(err);
+   }
+  });
+
 
 // get one product
 router.get('/:id', async (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
   try {
-    const productData = await Product.findByPk(req.params.id, associations);
+    const productData = await Product.findByPk(req.params.id, {
+      include: [{model: Category}, {model: Tag}],    
+  });
+
+  if (!productData) {
+    res.status(404).json({message: "No product found with this id number."})
+    return;
+  }
     res.status(200).json(productData);
   } catch (err) {
     res.status(500).json(err);
@@ -107,15 +116,15 @@ router.delete('/:id', async (req, res) => {
   try {
     const productData = await Product.destroy({
       where : {
-        id: req.params.id
-      }
+        id: req.params.id,
+      },
     });
-    if(!prdocutData) {
+    if(!productData) {
       res.status(404).json({message: "No product found with this id number."})
     }
     res.status(200).json(productData);
   } catch (err) {
-    res.status(400).json(err);
+    res.status(500).json(err);
   }
 });
 
